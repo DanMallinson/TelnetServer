@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+  <head>
+    <title>TelnetServer Feeds</title>
+  </head>
+  <body>
+    <outline text="BBC Top Stories" xmlUrl="https://feeds.bbci.co.uk/news/rss.xml"/>
+    <outline text="Eurogamer" xmlUrl="https://www.eurogamer.net/feed"/>
+    <outline text="Retro News" xmlUrl="https://www.retronews.com/feed/"/>
+    <outline text="Wargamer" xmlUrl="https://www.wargamer.com/mainrss.xml"/>
+  </body>
+</opml>

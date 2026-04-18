@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Net;
 using System.Net.Sockets;
+using System.Xml.Linq;
 using TelnetServer;
 
 public static class Program
@@ -65,13 +66,46 @@ public static class Program
     {
         var defaultMenu = new NewsMenu();
 
-        defaultMenu.Sources.Add(new Tuple<string, string>("BBC Top Stories", "https://feeds.bbci.co.uk/news/rss.xml"));
-        defaultMenu.Sources.Add(new Tuple<string, string>("Eurogamer", "https://www.eurogamer.net/feed"));
-        defaultMenu.Sources.Add(new Tuple<string, string>("Retro News", "https://www.retronews.com/feed/"));
-        defaultMenu.Sources.Add(new Tuple<string, string>("Wargamer", "https://www.wargamer.com/mainrss.xml"));
-        _menus = new SortedDictionary<string, Menu>();
+        const string opmlPath = "feeds.opml";
+        if (File.Exists(opmlPath))
+        {
+            try
+            {
+                var doc = XDocument.Load(opmlPath);
+                var outlines = doc.Descendants("outline")
+                    .Where(o => o.Attribute("xmlUrl") != null);
 
+                foreach (var outline in outlines)
+                {
+                    var name = outline.Attribute("text")?.Value ?? "Unknown";
+                    var url  = outline.Attribute("xmlUrl")!.Value;
+                    defaultMenu.Sources.Add(new Tuple<string, string>(name, url));
+                }
+
+                Console.WriteLine($"Loaded {defaultMenu.Sources.Count} feed(s) from {opmlPath}.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load {opmlPath}: {ex.Message}. Using default feeds.");
+                LoadDefaultSources(defaultMenu);
+            }
+        }
+        else
+        {
+            Console.WriteLine($"{opmlPath} not found. Using default feeds.");
+            LoadDefaultSources(defaultMenu);
+        }
+
+        _menus = new SortedDictionary<string, Menu>();
         _menus["default"] = defaultMenu;
+    }
+
+    static void LoadDefaultSources(NewsMenu menu)
+    {
+        menu.Sources.Add(new Tuple<string, string>("BBC Top Stories", "https://feeds.bbci.co.uk/news/rss.xml"));
+        menu.Sources.Add(new Tuple<string, string>("Eurogamer", "https://www.eurogamer.net/feed"));
+        menu.Sources.Add(new Tuple<string, string>("Retro News", "https://www.retronews.com/feed/"));
+        menu.Sources.Add(new Tuple<string, string>("Wargamer", "https://www.wargamer.com/mainrss.xml"));
     }
 }
 
