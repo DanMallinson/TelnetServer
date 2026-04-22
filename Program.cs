@@ -11,7 +11,7 @@ public static class Program
 
     {
         var alive = true;
-        var listener = new TcpListener(IPAddress.Any, 23);
+        var listener = new TcpListener(IPAddress.Any, 8080);
         var hostname = Dns.GetHostName();
         var entry = Dns.GetHostEntry(hostname);
         Console.WriteLine($"Listener started on:");
@@ -106,6 +106,7 @@ public static class Program
         menu.Sources.Add(new Tuple<string, string>("Eurogamer", "https://www.eurogamer.net/feed"));
         menu.Sources.Add(new Tuple<string, string>("Retro News", "https://www.retronews.com/feed/"));
         menu.Sources.Add(new Tuple<string, string>("Wargamer", "https://www.wargamer.com/mainrss.xml"));
+        menu.Sources.Add(new Tuple<string, string>("Amstrad", "https://www.reddit.com/r/Amstrad.rss"));
     }
 }
 

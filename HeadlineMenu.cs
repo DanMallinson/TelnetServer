@@ -13,14 +13,14 @@ namespace TelnetServer
         public string Title { get; set; } = string.Empty;
         public string Feed {  get; set; } = string.Empty;
 
-        public List<Tuple<string, DateTime, string>> Headlines { get; set; } = new List<Tuple<string, DateTime, string>>();
+        public List<Tuple<string, DateTime, string,string>> Headlines { get; set; } = new List<Tuple<string, DateTime, string,string>>();
 
         private int _page = 0;
 
         public override string GetContent(int width, int height)
         {
             var builder = new StringBuilder();
-            builder.AppendLine(Defines.GetHeading(Title,width));
+            builder.Append(Defines.GetHeading(Title,width)+"\r\n");
             var footer = string.Empty;
 
             var pageSize = height - 5;
@@ -40,11 +40,17 @@ namespace TelnetServer
 
                 if (idx >= Headlines.Count)
                 {
-                    builder.AppendLine();
+                    builder.Append("\r\n");
                 }
                 else
                 {
-                    builder.AppendLine($"{i}\t{Headlines[idx].Item1}");
+                    var headline = Headlines[idx].Item1;
+                    var num = i.ToString();
+                    if(headline.Length + num.Length >= width - 3)
+                    {
+                        headline = headline.Substring(0,(width - num.Length)-3);
+                    }
+                    builder.Append($"{num}\t{headline}\r\n");
                 }
             }
 
@@ -58,7 +64,7 @@ namespace TelnetServer
                 footer += " + Next Page ";
             }
 
-            builder.AppendLine(Defines.GetHeading(footer, width));
+            builder.Append(Defines.GetHeading(footer, width)+"\r\n");
 
 
             return builder.ToString();
@@ -67,20 +73,45 @@ namespace TelnetServer
         protected override void OnInitialise()
         {
             var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "CSharpApp/1.0");
             var result = httpClient.GetStringAsync(Feed).Result;
 
             var xml = new XmlDocument();
             xml.LoadXml(result);
 
             var items = xml.GetElementsByTagName("item");
+            if(items.Count == 0)
+            {
+                items = xml.GetElementsByTagName("entry");
+            }
             Headlines.Clear();
 
             foreach (XmlElement item in items)
             {
                 var title = item.GetElementsByTagName("title")[0].InnerText;
-                var timestamp = DateTime.Parse(item.GetElementsByTagName("pubDate")[0].InnerText);
+                var pub = item.GetElementsByTagName("pubDate");
+                var timestamp = DateTime.MinValue;
+                if(pub == null || pub.Count == 0)
+                {
+                    pub = item.GetElementsByTagName("published");
+                }
+                if(pub != null && pub.Count > 0)
+                {
+                    DateTime.TryParse(pub[0].InnerText,out timestamp);
+                }
+
                 var url = item.GetElementsByTagName("link")[0].InnerText;
-                Headlines.Add(new Tuple<string, DateTime, string>(title, timestamp, url));
+                var cont = item.GetElementsByTagName("content");
+                var content = string.Empty;
+                if(cont == null || cont.Count == 0)
+                {
+                    cont = item.GetElementsByTagName("content:encoded");
+                }
+                if(cont != null && cont.Count > 0)
+                {
+                    content = cont[0].InnerText;
+                }
+                Headlines.Add(new Tuple<string, DateTime, string,string>(title, timestamp, url,content));
             }
 
             Headlines = Headlines.OrderByDescending(x=>x.Item2).ThenBy(x=>x.Item1).ToList();
@@ -102,6 +133,7 @@ namespace TelnetServer
                         Url = Headlines[idx].Item3,
                         Timestamp = Headlines[idx].Item2,
                         Title = Headlines[idx].Item1,
+                        Article = Headlines[idx].Item4
                     };
 
                     client.SetMenu(story,true);

@@ -16,21 +16,21 @@ namespace TelnetServer
         {
             var builder = new StringBuilder();
 
-            builder.AppendLine("".PadLeft(width, '='));
+            builder.Append("".PadLeft(width, '=')+"\r\n");
             for(var i = 0; i< height; ++i)
             {
                 var idx = _offset + i;
                 if (idx < Sources.Count)
                 {
-                    builder.AppendLine($"{i}.\t{Sources[idx].Item1}");
+                    builder.Append($"{i}.\t{Sources[idx].Item1}\r\n");
                 }
                 else
                 {
                     break;
                 }
             }
-            builder.AppendLine("".PadLeft(width, '='));
-
+            builder.Append("".PadLeft(width, '='));
+            builder.Append("\r\n");
             return builder.ToString();
         }
         protected override void ProcessCommandInternal(string command, TelnetClient client)

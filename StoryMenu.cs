@@ -15,22 +15,38 @@ namespace TelnetServer
         public string Title { get; set; }
         public DateTime Timestamp { get; set; }
         public string Url { get; set; } = string.Empty;
+        public string Article {get; set;} = string.Empty;
 
         private int _page = 0;
         private List<string> _content = new List<string>();
 
         protected override void OnInitialise()
         {
-            var httpClient = new HttpClient();
-            var result = httpClient.GetStringAsync(Url).Result;
+            var result = string.Empty;
 
+            if(!string.IsNullOrEmpty(Article))
+            {
+                result=  Article;
+            }
+            else
+            {
+                var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "CSharpApp/1.0");
+                result = httpClient.GetStringAsync(Url).Result;
+            }
             var document = new HtmlDocument();
             document.LoadHtml(result);
-            var node = document.DocumentNode.SelectSingleNode("//main");
-            if(node == null)
+            
+            var node = document.DocumentNode;
+            if(string.IsNullOrEmpty(Article))
             {
-                node = document.DocumentNode.SelectSingleNode("//body");
+                node = document.DocumentNode.SelectSingleNode("//main");
+                if(node == null)
+                {
+                    node = document.DocumentNode.SelectSingleNode("//body");
+                }
             }
+            
             _content = new List<string>(GetTextInNode(node).Split(Environment.NewLine));
         }
 
@@ -41,14 +57,15 @@ namespace TelnetServer
             {
                 if(child.NodeType == HtmlNodeType.Text)
                 {
-                    builder.AppendLine(System.Net.WebUtility.HtmlDecode(child.InnerText.Trim()));
+                    builder.Append(System.Net.WebUtility.HtmlDecode(child.InnerText.Trim())+"\r\n");
                 }
                 else
                 {
                     var text = GetTextInNode(child).Trim();
                     if(!string.IsNullOrEmpty(text))
                     {
-                        builder.AppendLine(text);
+                        builder.Append(text);
+                        builder.Append("\r\n");
                     }
                 }
             }
@@ -62,11 +79,11 @@ namespace TelnetServer
 
             if (_page == 0)
             {
-                builder.AppendLine(GetHeader(width));
+                builder.Append(GetHeader(width)+"\r\n");
             }
             else
             {
-                builder.AppendLine(Defines.GetHeading(Title,width));
+                builder.Append(Defines.GetHeading(Title,width)+"\r\n");
             }
             //We might want to cache this if it doesn't change between calls
             var resized = ResizeContent(_content, width);
@@ -78,11 +95,11 @@ namespace TelnetServer
 
                 if(idx < resized.Count)
                 {
-                    builder.AppendLine(resized[idx]);
+                    builder.Append(resized[idx]+"\r\n");
                 }
                 else
                 {
-                    builder.AppendLine();
+                    builder.Append("\r\n");
                 }
 
             }
@@ -97,7 +114,7 @@ namespace TelnetServer
                 footer += " + Next Page ";
             }
 
-            builder.AppendLine(Defines.GetHeading(footer,width));
+            builder.Append(Defines.GetHeading(footer,width)+"\r\n");
 
             return builder.ToString();
         }
@@ -123,7 +140,7 @@ namespace TelnetServer
                             spaceIndex = width - 1;
                         }
 
-                        result.Add(text.Substring(0, spaceIndex));
+                        result.Add(text.Substring(0, spaceIndex-1));
                         text = text.Substring(spaceIndex );
                     }
                     result.Add(text);
@@ -139,12 +156,12 @@ namespace TelnetServer
             var combined = Title + " - " + Timestamp.ToString("dd MMM yyyy HH:mm");
             if (Title.Length >= width || combined.Length >= width)
             {
-                builder.AppendLine(Defines.GetHeading(Title,width));
-                builder.AppendLine(Defines.GetHeading(Timestamp.ToString("dd MMM yyyy HH:mm"),width));
+                builder.Append(Defines.GetHeading(Title,width)+"\r\n");
+                builder.Append(Defines.GetHeading(Timestamp.ToString("dd MMM yyyy HH:mm"),width)+"\r\n");
             }
             else
             {
-                builder.AppendLine(Defines.GetHeading(combined, width));
+                builder.Append(Defines.GetHeading(combined, width)+"\r\n");
             }
             return builder.ToString();
         }

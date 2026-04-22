@@ -28,19 +28,18 @@ namespace TelnetServer
                         var values = Enum.GetNames(typeof(TelnetClient.eTerminalType));
 
                         var builder = new StringBuilder();
-                        builder.AppendLine();
-                        builder.AppendLine("Select Terminal Type");
+                        builder.Append("\r\n");
+                        builder.Append("Select Terminal Type\r\n");
                         for (var i =0; i < values.Length; ++i)
                         {
-                            builder.AppendLine($"{i} : {values[i]}");
+                            builder.Append($"{i} : {values[i]}\r\n");
                         }
                         return builder.ToString();
                     }
-                    break;
                 case eMode.Width:
-                    return "\nEnter Terminal Width:";
+                    return "\r\nEnter Terminal Width:";
                 case eMode.Height:
-                    return "\nEnter Terminal Height:";
+                    return "\r\nEnter Terminal Height:";
             }
 
             return base.GetContent(width, height);

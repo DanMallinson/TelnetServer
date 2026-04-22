@@ -25,9 +25,9 @@ namespace TelnetServer
         {
             var builder = new StringBuilder();
 
-            builder.AppendLine("".PadLeft(width, '='));
-            builder.AppendLine(Content);
-            builder.AppendLine("".PadLeft(width, '='));
+            builder.Append("".PadLeft(width, '=')+"\r\n");
+            builder.Append(Content+"\r\n");
+            builder.Append("".PadLeft(width, '=')+"\r\n");
 
             return builder.ToString();
         }
